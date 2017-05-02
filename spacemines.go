@@ -15,7 +15,7 @@ type game struct {
 	oreProduction int
 	oreStorage int
 	year int
-	satisfaction int
+	satisfaction float32
 	minePrice int
 	orePrice int
 }
@@ -27,6 +27,13 @@ func initGame() *game {
 	g.money = random(10, 50) * g.numPeople
 	g.foodPrice = random(40,80)
 	g.oreProduction = random(40,80)
+
+	g.oreStorage = 0
+	g.year = 1;
+	g.satisfaction = 1
+
+	g.minePrice = random(2000, 4000)
+	g.orePrice = random(7, 12)
 	return &g;
 }
 
