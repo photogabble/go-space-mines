@@ -6,7 +6,6 @@ import (
 	"math/rand"
 )
 
-
 type Colony struct {
 	numMines int
 	numPeople int
@@ -23,22 +22,26 @@ type Colony struct {
 }
 
 func initColony() *Colony {
-	g := Colony{}
-	g.numMines = random(3,6)
-	g.numPeople = random(40, 60)
-	g.money = random(10, 50) * g.numPeople
-	g.foodPrice = random(40,80)
-	g.oreProduction = random(40,80)
+	c := Colony{}
+	c.numMines = random(3,6)
+	c.numPeople = random(40, 60)
+	c.money = random(10, 50) * c.numPeople
+	c.foodPrice = random(40,80)
+	c.oreProduction = random(40,80)
 
-	g.oreStorage = 0
-	g.year = 1;
-	g.satisfaction = 1
+	c.oreStorage = 0
+	c.year = 1;
+	c.satisfaction = 1
 
-	g.minePrice = random(2000, 4000)
-	g.orePrice = random(7, 12)
+	c.rollPriceDice()
 
-	g.failed = false
-	return &g;
+	c.failed = false
+	return &c;
+}
+
+func (c *Colony) rollPriceDice() {
+	c.minePrice = random(2000, 4000)
+	c.orePrice = random(7, 12)
 }
 
 func random(min, max int) int {
@@ -64,11 +67,25 @@ func (c *Colony) displayColonyStats() {
 	fmt.Println("Ore in store:", c.oreStorage, "tons")
 }
 
+func askForIntInput(s string) int {
+	var output int
+	for {
+		fmt.Printf("%s", s)
+		_, err := fmt.Scanf("%d\n",&output)
+
+		if err != nil {
+			fmt.Println("That input was invalid")
+			continue
+		} else {
+			break
+		}
+	}
+	return output
+}
+
 func (c *Colony) oreSale() {
 	for {
-		var oreToSell int
-		fmt.Print("How much ore to sell? ")
-		fmt.Scanf("%d",&oreToSell)
+		oreToSell := askForIntInput("How much ore to sell? ")
 		if oreToSell >= 0 && oreToSell <= c.oreStorage{
 			c.oreStorage -= oreToSell
 			c.money += oreToSell * c.orePrice
@@ -79,9 +96,7 @@ func (c *Colony) oreSale() {
 
 func (c *Colony) mineSale() {
 	for {
-		var minesToSell int
-		fmt.Print("How many mines to sell? ")
-		fmt.Scanf("%d",&minesToSell)
+		minesToSell := askForIntInput("How many mines to sell? ")
 		if minesToSell >= 0 && minesToSell <= c.numMines{
 			c.numMines -= minesToSell
 			c.money += minesToSell * c.minePrice
@@ -92,9 +107,7 @@ func (c *Colony) mineSale() {
 
 func (c *Colony) foodBuy() {
 	for {
-		var foodToBuy int
-		fmt.Print("How much to spend on food? (Appr. $100 EA.) ")
-		fmt.Scanf("%d",&foodToBuy)
+		foodToBuy := askForIntInput("How much to spend on food? (Appr. $100 EA.) ")
 		if foodToBuy >= 0 && foodToBuy <= c.money{
 			c.food += foodToBuy
 			c.money -= foodToBuy
@@ -107,18 +120,18 @@ func (c *Colony) foodBuy() {
 				c.satisfaction-=.2
 			}
 			break
+		}else{
+			fmt.Println("You don't have enough money to afford that amount of food.")
 		}
 	}
 }
 
 func (c *Colony) mineBuy() {
 	for {
-		var minesToBuy int
-		fmt.Print("How many more mines to buy? ")
-		fmt.Scanf("%d",&minesToBuy)
+		minesToBuy := askForIntInput("How many more mines to buy? ")
 		if minesToBuy >= 0 && (minesToBuy * c.minePrice) <= c.money{
 			c.numMines += minesToBuy
-			c.money = minesToBuy * c.minePrice
+			c.money -= minesToBuy * c.minePrice
 			break
 		}
 	}
@@ -143,6 +156,7 @@ func main(){
 		fmt.Println("You have $", c.money)
 		fmt.Println("")
 		fmt.Println("Buying")
+
 		c.foodBuy()
 		c.mineBuy()
 
@@ -188,6 +202,9 @@ func main(){
 			fmt.Println("Market Glut - Price Drops!")
 			c.foodPrice /= 2
 		}
+
+		// Player has survived another year
+		c.rollPriceDice()
 		c.year++
 		fmt.Println("")
 	}
