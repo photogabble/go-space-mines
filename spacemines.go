@@ -46,6 +46,11 @@ func random(min, max int) int {
 	return rand.Intn(max - min) + min
 }
 
+func randomFloat() float64 {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Float64()
+}
+
 func (c *Colony) displayColonyStats() {
 	fmt.Println("Year", c.year)
 	fmt.Println("There are", c.numPeople, "people in the colony")
@@ -60,65 +65,61 @@ func (c *Colony) displayColonyStats() {
 }
 
 func (c *Colony) oreSale() {
-	finished := false
-	for finished == false {
+	for {
 		var oreToSell int
 		fmt.Print("How much ore to sell? ")
 		fmt.Scanf("%d",&oreToSell)
-		if (oreToSell >= 0 && oreToSell <= c.oreStorage){
+		if oreToSell >= 0 && oreToSell <= c.oreStorage{
 			c.oreStorage -= oreToSell
-			c.money += (oreToSell * c.orePrice)
-			finished = true
+			c.money += oreToSell * c.orePrice
+			break
 		}
 	}
 }
 
 func (c *Colony) mineSale() {
-	finished := false
-	for finished == false {
+	for {
 		var minesToSell int
 		fmt.Print("How many mines to sell? ")
 		fmt.Scanf("%d",&minesToSell)
-		if (minesToSell >= 0 && minesToSell <= c.numMines){
+		if minesToSell >= 0 && minesToSell <= c.numMines{
 			c.numMines -= minesToSell
-			c.money += (minesToSell * c.minePrice)
-			finished = true
+			c.money += minesToSell * c.minePrice
+			break
 		}
 	}
 }
 
 func (c *Colony) foodBuy() {
-	finished := false
-	for finished == false {
+	for {
 		var foodToBuy int
-		fmt.Print("How much to spend on food? (Appr. $100 EA. ")
+		fmt.Print("How much to spend on food? (Appr. $100 EA.) ")
 		fmt.Scanf("%d",&foodToBuy)
-		if (foodToBuy >= 0 && foodToBuy <= c.money){
+		if foodToBuy >= 0 && foodToBuy <= c.money{
 			c.food += foodToBuy
 			c.money -= foodToBuy
 
-			if (foodToBuy / c.numPeople > 120) {
+			if foodToBuy / c.numPeople > 120 {
 				c.satisfaction+=.1
 			}
 
-			if (foodToBuy / c.numPeople < 80) {
+			if foodToBuy / c.numPeople < 80 {
 				c.satisfaction-=.2
 			}
-			finished = true
+			break
 		}
 	}
 }
 
 func (c *Colony) mineBuy() {
-	finished := false
-	for finished == false {
+	for {
 		var minesToBuy int
 		fmt.Print("How many more mines to buy? ")
 		fmt.Scanf("%d",&minesToBuy)
-		if (minesToBuy >= 0 && (minesToBuy * c.minePrice) <= c.money){
+		if minesToBuy >= 0 && (minesToBuy * c.minePrice) <= c.money{
 			c.numMines += minesToBuy
-			c.money = (minesToBuy * c.minePrice)
-			finished = true
+			c.money = minesToBuy * c.minePrice
+			break
 		}
 	}
 }
@@ -145,6 +146,13 @@ func main(){
 		c.foodBuy()
 		c.mineBuy()
 
+		// If there are less than 10 people per mine then game over
+		if c.numPeople / c.numMines < 10 {
+			c.failed = true
+			fmt.Println("You've overworked everyone, Game Over!")
+			break
+		}
+
 		// If satisfaction is high, more people arrive
 		if c.satisfaction > 1.1 {
 			c.numPeople += random(1,10)
@@ -155,16 +163,36 @@ func main(){
 			c.numPeople -= random(1,10)
 		}
 
-		// If there are less than 30 people then game over
-		if c.numPeople < 30 {
+		// If the satisfaction is too low then game over
+		if c.satisfaction < 0.6 {
 			c.failed = true
-			fmt.Println("Not enough people left, game over!")
+			fmt.Println("The people revolted, Game Over!")
 			break
 		}
 
-		if (c.failed == false) {
-			c.year++
+		// If there are less than 30 people in total then game over
+		if c.numPeople < 30 {
+			c.failed = true
+			fmt.Println("Not enough people left, Game Over!")
+			break
 		}
+
+		// Introduce a small chance that half the population gets killed
+		if randomFloat() < 0.1 {
+			fmt.Println("RADIOACTIVE LEAK....MANY DIE!")
+			c.numPeople /= 2
+		}
+
+		// If the amount produced per mine is very high, ore price is halved
+		if c.oreProduction > 150 {
+			fmt.Println("Market Glut - Price Drops!")
+			c.foodPrice /= 2
+		}
+		c.year++
+		fmt.Println("")
 	}
-	//fmt.Println(g)
+
+	if c.failed == false {
+		fmt.Println("You survived your term of office")
+	}
 }
